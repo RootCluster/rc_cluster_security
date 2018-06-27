@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.crypto.Cipher;
 import java.security.*;
+import java.util.Base64;
 
 /**
  * @author Jerry xu
@@ -16,14 +17,27 @@ import java.security.*;
 public class RSAController {
 
     /**
-     * 获取RSA加密公钥
+     * 获取RSA公钥
      *
-     * @return KeyPair
+     * @return getPublicKey
+     * @throws NoSuchAlgorithmException 算法异常
      */
     @ResponseBody
     @RequestMapping(value = "getPublicKey", method = RequestMethod.GET)
-    public String getPublicKey() throws NoSuchAlgorithmException {
-        return buildKeyPair().getPublic().toString();
+    public byte[] getPublicKey() throws NoSuchAlgorithmException {
+        return Base64.getEncoder().encode(buildKeyPair(2048).getPublic().getEncoded());
+    }
+
+    /**
+     * 获取RSA私钥
+     *
+     * @return getPrivateKey
+     * @throws NoSuchAlgorithmException 算法异常
+     */
+    @ResponseBody
+    @RequestMapping(value = "getPrivateKey", method = RequestMethod.GET)
+    public byte[] getPrivateKey() throws NoSuchAlgorithmException {
+        return Base64.getEncoder().encode(buildKeyPair(2048).getPrivate().getEncoded());
     }
 
     /**
@@ -33,34 +47,55 @@ public class RSAController {
      */
     @ResponseBody
     @RequestMapping(value = "decryptClient", method = RequestMethod.POST)
-    public boolean decryptClient() {
-        // TODO: 2018/6/13
+    public boolean decryptClient(MessageBean message) throws Exception {
+        if (null != message) {
+            // 解密客户端公钥加密内容
+            String serverDecryptContent = new String(decrypt(buildKeyPair(2048).getPrivate(), message.getEncryptContent().getBytes()));
+            System.out.println("客户端原数据（未公钥加密）：" + message.getUnencryptedContent());
+            System.out.println("服务端解密客户端公钥数据：" + serverDecryptContent);
+            return serverDecryptContent.equals(message.getUnencryptedContent());
+        }
         return false;
     }
 
     /**
-     * 生成RSA公钥
+     * 生成RSA密钥对
      *
      * @return 公钥
      * @throws NoSuchAlgorithmException 异常
      */
-    public static KeyPair buildKeyPair() throws NoSuchAlgorithmException {
-        final int keySize = 2048;
+    public static KeyPair buildKeyPair(int keySize) throws NoSuchAlgorithmException {
         KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
         keyPairGenerator.initialize(keySize);
-        return keyPairGenerator.genKeyPair();
+        return keyPairGenerator.generateKeyPair();
     }
 
-    public static byte[] encrypt(PrivateKey privateKey, String message) throws Exception {
+    /**
+     * 公钥加密
+     *
+     * @param publicKey 公钥
+     * @param encrypted 编码
+     * @return byte
+     * @throws Exception 异常
+     */
+    public static byte[] encrypt(PublicKey publicKey, byte[] encrypted) throws Exception {
         Cipher cipher = Cipher.getInstance("RSA");
-        cipher.init(Cipher.ENCRYPT_MODE, privateKey);
-        return cipher.doFinal(message.getBytes());
-    }
-
-    public static byte[] decrypt(PublicKey publicKey, byte[] encrypted) throws Exception {
-        Cipher cipher = Cipher.getInstance("RSA");
-        cipher.init(Cipher.DECRYPT_MODE, publicKey);
+        cipher.init(Cipher.ENCRYPT_MODE, publicKey);
         return cipher.doFinal(encrypted);
+    }
+
+    /**
+     * 私钥解密
+     *
+     * @param privateKey 私钥
+     * @param message    密文
+     * @return byte
+     * @throws Exception 异常
+     */
+    public static byte[] decrypt(PrivateKey privateKey, byte[] message) throws Exception {
+        Cipher cipher = Cipher.getInstance("RSA");
+        cipher.init(Cipher.DECRYPT_MODE, privateKey);
+        return cipher.doFinal(message);
     }
 
 }
