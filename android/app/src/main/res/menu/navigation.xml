@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/navigation_asymmetric"
+        android:icon="@drawable/ic_dashboard_black"
+        android:title="@string/title_asymmetric" />
+
+    <item
+        android:id="@+id/navigation_symmetric"
+        android:icon="@drawable/ic_flip_black"
+        android:title="@string/title_symmetric" />
+
+    <item
+        android:id="@+id/navigation_jwt"
+        android:icon="@drawable/ic_beenhere_black"
+        android:title="@string/title_jwt" />
+
+</menu>

@@ -1,0 +1,15 @@
+<resources>
+    <string name="app_name">Security</string>
+    <string name="title_asymmetric">非对称</string>
+    <string name="title_symmetric">对称</string>
+    <string name="title_jwt">JWT</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="title_about">关于</string>
+    <string name="title_dsa">DSA</string>
+    <string name="title_ecc">ECC</string>
+    <string name="title_rsa">RSA</string>
+    <string name="title_aes">AES</string>
+    <string name="title_des">DES</string>
+</resources>
