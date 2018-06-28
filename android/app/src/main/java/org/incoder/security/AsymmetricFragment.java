@@ -1,13 +1,19 @@
 package org.incoder.security;
 
 
+import android.annotation.SuppressLint;
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.design.widget.TextInputLayout;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentActivity;
+import android.support.v7.app.AlertDialog;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -43,6 +49,8 @@ public class AsymmetricFragment extends Fragment {
     @BindView(R.id.btn_rsa_send)
     Button btnRsaSend;
     Unbinder unbinder;
+    private AutoCompleteTextView actName;
+    private TextInputLayout tiName;
     private String rsaContentTextView;
     private String sendRsaContent;
 
@@ -90,7 +98,28 @@ public class AsymmetricFragment extends Fragment {
 
 
     private boolean addEncryptText() {
-        return false;
+        AlertDialog.Builder builder;
+        final boolean[] isEditTextContent = new boolean[1];
+        builder = new AlertDialog.Builder(getActivityNonNull());
+        LayoutInflater inflater = getActivityNonNull().getLayoutInflater();
+        @SuppressLint("InflateParams") View view = inflater.inflate(R.layout.dialog_alert_add, null);
+        actName = view.findViewById(R.id.act_name);
+        tiName = view.findViewById(R.id.ti_name);
+        builder.setView(view)
+                .setTitle("文本")
+                .setPositiveButton("确定", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        if (actName.getText().length() > 0) {
+                            isEditTextContent[0] = true;
+                        } else {
+                            isEditTextContent[0] = false;
+                        }
+//                        isEditTextContent = actName.getText().length() > 0;
+                    }
+                })
+                .setNegativeButton("取消", null).show();
+        return true;
     }
 
     /**
@@ -106,21 +135,22 @@ public class AsymmetricFragment extends Fragment {
      * 获取公钥
      */
     private void getPublicKey() {
-        RetrofitManage.getInstance().createService(ApiService.class)
-                .getPublicKey().enqueue(new Callback<Byte>() {
-            @Override
-            public void onResponse(@NonNull Call<Byte> call, @NonNull Response<Byte> response) {
-                if (response.body() != null) {
-                    rsaContentTextView = "获取公钥：" + String.valueOf(response.body());
-                    tvRsaContent.setText(rsaContentTextView);
-                }
-            }
 
-            @Override
-            public void onFailure(@NonNull Call<Byte> call, @NonNull Throwable t) {
-                Toast.makeText(getContext(), "获取公钥失败", Toast.LENGTH_SHORT).show();
-            }
-        });
+        RetrofitManage.getInstance().createService().getPublicKey()
+                .enqueue(new Callback<PublicKeyBean>() {
+                    @Override
+                    public void onResponse(@NonNull Call<PublicKeyBean> call, @NonNull Response<PublicKeyBean> response) {
+                        if (response.body() != null) {
+                            rsaContentTextView = "获取公钥：" + response.body().getPublicKey().toString();
+                            tvRsaContent.setText(rsaContentTextView);
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(@NonNull Call<PublicKeyBean> call, @NonNull Throwable t) {
+                        Toast.makeText(getContext(), "获取公钥失败", Toast.LENGTH_SHORT).show();
+                    }
+                });
     }
 
     public AsymmetricFragment() {
@@ -148,4 +178,11 @@ public class AsymmetricFragment extends Fragment {
         unbinder.unbind();
     }
 
+    protected FragmentActivity getActivityNonNull() {
+        if (super.getActivity() != null) {
+            return super.getActivity();
+        } else {
+            throw new RuntimeException("null returned from getActivity()");
+        }
+    }
 }

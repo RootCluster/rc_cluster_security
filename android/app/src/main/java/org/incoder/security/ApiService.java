@@ -18,7 +18,7 @@ public interface ApiService {
      * @return 公钥byte
      */
     @GET("getPublicKey")
-    Call<Byte> getPublicKey();
+    Call<PublicKeyBean> getPublicKey();
 
     /**
      * 获取私钥

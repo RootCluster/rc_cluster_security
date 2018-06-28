@@ -8,6 +8,8 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.crypto.Cipher;
 import java.security.*;
 import java.util.Base64;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author Jerry xu
@@ -24,8 +26,10 @@ public class RSAController {
      */
     @ResponseBody
     @RequestMapping(value = "getPublicKey", method = RequestMethod.GET)
-    public byte[] getPublicKey() throws NoSuchAlgorithmException {
-        return Base64.getEncoder().encode(buildKeyPair(2048).getPublic().getEncoded());
+    public Object getPublicKey() throws NoSuchAlgorithmException {
+        Map<String, byte[]> result = new HashMap<>();
+        result.put("publicKey", Base64.getEncoder().encode(buildKeyPair(1024).getPublic().getEncoded()));
+        return result;
     }
 
     /**
@@ -36,8 +40,10 @@ public class RSAController {
      */
     @ResponseBody
     @RequestMapping(value = "getPrivateKey", method = RequestMethod.GET)
-    public byte[] getPrivateKey() throws NoSuchAlgorithmException {
-        return Base64.getEncoder().encode(buildKeyPair(2048).getPrivate().getEncoded());
+    public Object getPrivateKey() throws NoSuchAlgorithmException {
+        Map<String, byte[]> result = new HashMap<>();
+        result.put("getPrivateKey", Base64.getEncoder().encode(buildKeyPair(1024).getPrivate().getEncoded()));
+        return result;
     }
 
     /**
@@ -50,7 +56,7 @@ public class RSAController {
     public boolean decryptClient(MessageBean message) throws Exception {
         if (null != message) {
             // 解密客户端公钥加密内容
-            String serverDecryptContent = new String(decrypt(buildKeyPair(2048).getPrivate(), message.getEncryptContent().getBytes()));
+            String serverDecryptContent = new String(decrypt(buildKeyPair(1024).getPrivate(), message.getEncryptContent().getBytes()));
             System.out.println("客户端原数据（未公钥加密）：" + message.getUnencryptedContent());
             System.out.println("服务端解密客户端公钥数据：" + serverDecryptContent);
             return serverDecryptContent.equals(message.getUnencryptedContent());
