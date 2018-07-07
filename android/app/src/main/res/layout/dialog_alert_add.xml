@@ -17,8 +17,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="需要加密内容"
-            android:inputType="text"
-            android:maxLines="1" />
+            android:inputType="text" />
     </android.support.design.widget.TextInputLayout>
 
 </LinearLayout>

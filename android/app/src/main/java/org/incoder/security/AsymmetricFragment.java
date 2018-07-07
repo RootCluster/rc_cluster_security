@@ -2,7 +2,9 @@ package org.incoder.security;
 
 
 import android.annotation.SuppressLint;
+import android.content.Context;
 import android.content.DialogInterface;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -53,6 +55,9 @@ public class AsymmetricFragment extends Fragment {
     private TextInputLayout tiName;
     private String rsaContentTextView;
     private String sendRsaContent;
+    private String editContent;
+    public static final String PREFS_NAME = "PrefsFile";
+    public SharedPreferences preferences;
 
     @OnClick({R.id.btn_public, R.id.btn_private, R.id.btn_rsa_send})
     public void onViewClicked(View view) {
@@ -76,33 +81,19 @@ public class AsymmetricFragment extends Fragment {
      */
     private void getPrivateAndDecode() {
         // 添加需要解密的文本
-        if (addEncryptText()) {
+        addEncryptText();
+        if (editContent.length() > 0) {
 
         }
-        RetrofitManage.getInstance().createService(ApiService.class)
-                .getPrivateKey().enqueue(new Callback<Byte>() {
-            @Override
-            public void onResponse(@NonNull Call<Byte> call, @NonNull Response<Byte> response) {
-                if (response.body() != null) {
-                    rsaContentTextView = rsaContentTextView + "\n获取私钥：" + String.valueOf(response.body());
-                    tvRsaContent.setText(rsaContentTextView);
-                }
-            }
-
-            @Override
-            public void onFailure(@NonNull Call<Byte> call, @NonNull Throwable t) {
-                Toast.makeText(getContext(), "获取公钥失败", Toast.LENGTH_SHORT).show();
-            }
-        });
     }
 
 
-    private boolean addEncryptText() {
+    private void addEncryptText() {
         AlertDialog.Builder builder;
-        final boolean[] isEditTextContent = new boolean[1];
         builder = new AlertDialog.Builder(getActivityNonNull());
         LayoutInflater inflater = getActivityNonNull().getLayoutInflater();
-        @SuppressLint("InflateParams") View view = inflater.inflate(R.layout.dialog_alert_add, null);
+        @SuppressLint("InflateParams")
+        View view = inflater.inflate(R.layout.dialog_alert_add, null);
         actName = view.findViewById(R.id.act_name);
         tiName = view.findViewById(R.id.ti_name);
         builder.setView(view)
@@ -110,25 +101,40 @@ public class AsymmetricFragment extends Fragment {
                 .setPositiveButton("确定", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        if (actName.getText().length() > 0) {
-                            isEditTextContent[0] = true;
-                        } else {
-                            isEditTextContent[0] = false;
+                        editContent = actName.getText().toString();
+                        String publicKey = preferences.getString("publicKey", null);
+                        MessageBean bean = new MessageBean();
+                        if (editContent.length() > 0) {
+                            bean.setUnencryptedContent(editContent);
+                            try {
+                                bean.setEncryptContent(new String(RSAUtils.encryptByPublicKey(publicKey, editContent.getBytes())));
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
                         }
-//                        isEditTextContent = actName.getText().length() > 0;
+
+                        RetrofitManage.getInstance().createService().decryptClient(bean)
+                                .enqueue(new Callback<Boolean>() {
+                                    @Override
+                                    public void onResponse(@NonNull Call<Boolean> call, @NonNull Response<Boolean> response) {
+                                        Toast.makeText(getContext(), "发送成功", Toast.LENGTH_SHORT).show();
+                                    }
+
+                                    @Override
+                                    public void onFailure(@NonNull Call<Boolean> call, @NonNull Throwable t) {
+                                        Toast.makeText(getContext(), "发送失败", Toast.LENGTH_SHORT).show();
+                                    }
+                                });
                     }
                 })
                 .setNegativeButton("取消", null).show();
-        return true;
     }
 
     /**
      * 发送加密内容
      */
     private void sendRsa() {
-        if (addEncryptText()) {
-
-        }
+        addEncryptText();
     }
 
     /**
@@ -141,7 +147,13 @@ public class AsymmetricFragment extends Fragment {
                     @Override
                     public void onResponse(@NonNull Call<PublicKeyBean> call, @NonNull Response<PublicKeyBean> response) {
                         if (response.body() != null) {
-                            rsaContentTextView = "获取公钥：" + response.body().getPublicKey().toString();
+                            rsaContentTextView = "获取公钥：" + response.body().getPublicKey();
+                            // 获取编辑器
+                            SharedPreferences.Editor editor = preferences.edit();
+                            // 存储公钥到文件
+                            editor.putString("publicKey", response.body().getPublicKey());
+                            // 提交修改
+                            editor.apply();
                             tvRsaContent.setText(rsaContentTextView);
                         }
                     }
@@ -158,8 +170,7 @@ public class AsymmetricFragment extends Fragment {
     }
 
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_asymmetric, container, false);
         unbinder = ButterKnife.bind(this, view);
@@ -170,6 +181,8 @@ public class AsymmetricFragment extends Fragment {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setHasOptionsMenu(true);
+        // 使用SharedPreferences存储公钥
+        preferences = getActivityNonNull().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
     }
 
     @Override
