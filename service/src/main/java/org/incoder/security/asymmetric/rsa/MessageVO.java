@@ -1,21 +1,25 @@
 package org.incoder.security.asymmetric.rsa;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 /**
- * .MessageBean
+ * .MessageVO
  *
  * @author : Jerry xu
  * @date : 6/28/2018 1:21 AM
  */
-public class MessageBean {
+public class MessageVO {
 
     /**
      * 原数据（未加密数据）
      */
+    @JsonProperty(value = "unencryptedContent")
     private String unencryptedContent;
 
     /**
      * 公钥加密后数据
      */
+    @JsonProperty(value = "encryptContent")
     private String encryptContent;
 
     public String getUnencryptedContent() {
@@ -32,5 +36,13 @@ public class MessageBean {
 
     public void setEncryptContent(String encryptContent) {
         this.encryptContent = encryptContent;
+    }
+
+    @Override
+    public String toString() {
+        return "MessageVO{" +
+                "unencryptedContent='" + unencryptedContent + '\'' +
+                ", encryptContent='" + encryptContent + '\'' +
+                '}';
     }
 }

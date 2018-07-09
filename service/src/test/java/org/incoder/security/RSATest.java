@@ -14,7 +14,7 @@ public class RSATest {
 
     public static void main(String[] args) throws Exception {
         // 生成密钥对
-//        generateKeyPair();
+//        RSAUtils.generateKeyPair();
         // 公钥加密
         String contentString = "hello world";
         System.out.println("原数据：" + contentString);

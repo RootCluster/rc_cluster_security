@@ -51,9 +51,9 @@ public class RSAController {
      */
     @ResponseBody
     @RequestMapping(value = "decryptClient", method = RequestMethod.POST)
-    public boolean decryptClient(@RequestBody MessageBean message) throws Exception {
+    public boolean decryptClient(@RequestBody MessageVO message) throws Exception {
         if (null != message) {
-            // 解密客户端公钥加密内容
+            // 解密客户端公钥加密内容 parseHexBinary(message.getEncryptContent())
             String serverDecryptContent = new String(RSAUtils.decryptByPrivateKey(RSAUtils.getKeyPairString(PRIVATE_KEY_FILE), message.getEncryptContent().getBytes()));
             System.out.println("客户端原数据（未公钥加密）：" + message.getUnencryptedContent());
             System.out.println("服务端解密客户端公钥数据：" + serverDecryptContent);

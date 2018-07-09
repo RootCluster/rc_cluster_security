@@ -30,6 +30,10 @@ public class RSAUtils {
      * 指定私钥存放文件
      */
     public static String PRIVATE_KEY_FILE = "PrivateKey";
+    /**
+     * 签名算法
+     */
+    public static final String SIGNATURE_ALGORITHM = "MD5withRSA";
 
     /**
      * 生成RSA密钥对
@@ -267,6 +271,55 @@ public class RSAUtils {
         Cipher cipher = Cipher.getInstance(KEY_ALGORITHM);
         cipher.init(Cipher.DECRYPT_MODE, privateKey);
         return cipher.doFinal(message);
+    }
+
+    /**
+     * 用私钥对信息生成数字签名
+     *
+     * @param data       加密数据
+     * @param privateKey 私钥
+     * @return 签名
+     * @throws Exception 异常
+     */
+    public static String sign(byte[] data, String privateKey) throws Exception {
+        // 解码由base64编码的私钥
+        byte[] keyBytes = Base64.getDecoder().decode(privateKey);
+        // 构造PKCS8EncodedKeySpec对象
+        PKCS8EncodedKeySpec pkcs8KeySpec = new PKCS8EncodedKeySpec(keyBytes);
+        // KEY_ALGORITHM 指定的加密算法
+        KeyFactory keyFactory = KeyFactory.getInstance(KEY_ALGORITHM);
+        // 取私钥匙对象
+        PrivateKey priKey = keyFactory.generatePrivate(pkcs8KeySpec);
+        // 用私钥对信息生成数字签名
+        Signature signature = Signature.getInstance(SIGNATURE_ALGORITHM);
+        signature.initSign(priKey);
+        signature.update(data);
+        return new String(Base64.getEncoder().encode(signature.sign()));
+    }
+
+    /**
+     * 校验数字签名
+     *
+     * @param data      加密数据
+     * @param publicKey 公钥
+     * @param sign      数字签名
+     * @return 校验成功返回true 失败返回false
+     * @throws Exception 异常
+     */
+    public static boolean verify(byte[] data, String publicKey, String sign) throws Exception {
+        // 解码由base64编码的公钥
+        byte[] keyBytes = Base64.getDecoder().decode(publicKey);
+        // 构造X509EncodedKeySpec对象
+        X509EncodedKeySpec keySpec = new X509EncodedKeySpec(keyBytes);
+        // KEY_ALGORITHM 指定的加密算法
+        KeyFactory keyFactory = KeyFactory.getInstance(KEY_ALGORITHM);
+        // 取公钥匙对象
+        PublicKey pubKey = keyFactory.generatePublic(keySpec);
+        Signature signature = Signature.getInstance(SIGNATURE_ALGORITHM);
+        signature.initVerify(pubKey);
+        signature.update(data);
+        // 验证签名是否正常
+        return signature.verify(Base64.getDecoder().decode(sign));
     }
 
 }
